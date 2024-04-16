@@ -1,6 +1,7 @@
 services:
   getgrassbot:
     build: .
+    hostname: ''
     restart: unless-stopped
     deploy:
       mode: replicated
@@ -12,3 +13,9 @@ services:
       PROXY_PASSWORD: ''
       PROXY_PORT: ''
       TOKEN: ''
+      TELEGRAM_BOT_TOKEN: ''
+      TELEGRAM_CHAT_ID: ''
+      TELEGRAM_TOPIC_ID: ''
+      TELEGRAM_ERROR_BOT_TOKEN: ''
+      TELEGRAM_ERROR_CHAT_ID: ''
+      TELEGRAM_ERROR_TOPIC_ID: ''

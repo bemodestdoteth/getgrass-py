@@ -1,0 +1,14 @@
+services:
+  getgrassbot:
+    build: .
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      USER_ID: ''
+      PROXY_HOST: ''
+      PROXY_USERNAME: ''
+      PROXY_PASSWORD: ''
+      PROXY_PORT: ''
+      TOKEN: ''

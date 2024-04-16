@@ -14,7 +14,7 @@ headers = { 'Authorization': TOKEN }
 
 def getDevices() -> List[Device]:
     params = { "input": dumps( { "limit": 100 }) }
-    result = get('https://api.getgrass.io/devices', params=params, headers=headers).json()
+    result = get('https://api.getgrass.io/devices', params=params, headers=headers, verify=False).json()
     return [Device.from_json(dumps(device)) for device in result['result']['data']['data']]
 
 

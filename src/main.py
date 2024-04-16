@@ -94,7 +94,7 @@ def main():
         device = utils.getDeviceInfo(utils.getDevices(), deviceId)
         ipScores.append(str(device.ipScore))
         logger.info(f"Device score {device.ipScore}")
-        if rand() < 0.5 : # Adjust message frequency
+        if rand() < 0.3 : # Adjust message frequency
             BOT = Tg(token=getenv('TELEGRAM_BOT_TOKEN'), chat_id=getenv('TELEGRAM_CHAT_ID'), topic_id=getenv('TELEGRAM_TOPIC_ID'))
             asyncio.run(BOT.send_notification(
                 "Status",

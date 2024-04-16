@@ -90,7 +90,7 @@ def main():
         ipScores.append(str(device.ipScore))
         logger.info(f"Device score {device.ipScore}")
 
-        if len(ipScores) >= 5 and device.ipScore <= 75:
+        if len(ipScores) >= 5 and device.ipScore <= 74:
             logger.warning(f'Device score is too low ({" ".join(ipScores)}), exitting')
             ws.close()
             exit()

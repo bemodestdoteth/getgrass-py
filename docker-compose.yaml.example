@@ -19,3 +19,5 @@ services:
       TELEGRAM_ERROR_BOT_TOKEN: ''
       TELEGRAM_ERROR_CHAT_ID: ''
       TELEGRAM_ERROR_TOPIC_ID: ''
+      HASH_STR: ''
+      KEY: ''

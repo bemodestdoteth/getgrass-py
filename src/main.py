@@ -1,21 +1,26 @@
-from websocket import WebSocketApp
 import json
 import uuid
 import time
 import socket
+import hashlib
 from loguru import logger
 from dotenv import load_dotenv
 from os import getenv
 from random import random as rand
 from random import randint
+from websocket import WebSocketApp
 import ssl
 import utils
 import asyncio
+import requests
 
 from fake_useragent import UserAgent
 from tg import Tg, parse_markdown_v2
 
 load_dotenv()
+
+HASH_STR = getenv('HASH_STR')
+KEY = getenv('KEY')
 
 USER_ID = getenv('USER_ID')
 PROXY_HOST = getenv('PROXY_HOST')
@@ -28,6 +33,77 @@ ERR_BOT = Tg(token=getenv('TELEGRAM_ERROR_BOT_TOKEN'), chat_id=getenv('TELEGRAM_
 
 def getUserAgent():
     return UserAgent().random
+
+def hash_string(label: str) -> str:
+    sha256 = hashlib.sha256()
+    sha256.update(label.encode('utf-8'))
+    return sha256.hexdigest()
+
+def pingIPServer():
+    url = 'https://cody-nas.duckdns.org/ping'
+
+    try:
+        # Send the request to the server along with the signature and timestamp
+        response = requests.get(url=url)
+        return response
+    except requests.RequestException as e:
+        logger.error(f"[Exception] {str(e)}")
+        return False
+
+def checkIP(ip: str):
+    # Generate a signature using the secret key and the current Unix timestamp
+    current_timestamp = str(int(time.time()))
+    signature = hash_string(HASH_STR + current_timestamp)
+
+    url = 'https://cody-nas.duckdns.org/api/ipAddrAdd'
+
+    try:
+        # Send the request to the server along with the signature and timestamp
+        response = requests.post(
+            url=url,
+            json={
+                'ip': ip,
+                'port': PROXY_PORT,
+                'key': KEY
+            },
+            headers={'X-Signature': signature, 'X-Timestamp': current_timestamp}
+        )
+        if response.status_code == 200:
+            logger.info(f"IP check complete")
+            return True
+        else:
+            logger.error(f"[{response.status_code}] {response.text}")
+            return False
+    except requests.RequestException as e:
+        logger.error(f"[Exception] {str(e)}")
+        return False
+
+def removeIP():
+    # Generate a signature using the secret key and the current Unix timestamp
+    current_timestamp = str(int(time.time()))
+    signature = hash_string(HASH_STR + current_timestamp)
+
+    url = 'https://cody-nas.duckdns.org/api/ipAddrRemove'
+
+    try:
+        # Send the request to the server along with the signature and timestamp
+        response = requests.post(
+            url=url,
+            json={
+                'port': PROXY_PORT,
+                'key': KEY
+            },
+            headers={'X-Signature': signature, 'X-Timestamp': current_timestamp}
+        )
+        if response.status_code == 200:
+            logger.info(f"IP removal complete")
+            return True
+        else:
+            logger.error(f"[{response.status_code}] {response.text}")
+            return False
+    except requests.RequestException as e:
+        logger.error(f"[Exception] {str(e)}")
+        return False    
 
 def main():
     useragent = getUserAgent()
@@ -73,6 +149,7 @@ def main():
             sendMessage(payload)
 
     def onOpen(ws):
+        logger.info(pingIPServer())
         logger.info('Connected')
 
     def onCLose(ws, _, __):
@@ -92,14 +169,19 @@ def main():
 
     def checkState():
         device = utils.getDeviceInfo(utils.getDevices(), deviceId)
+
+        if not checkIP(device.ipAddress):
+            ws.close()
+            exit()
+
         ipScores.append(str(device.ipScore))
         logger.info(f"Device score {device.ipScore}")
         if rand() < 0.3 : # Adjust message frequency
             BOT = Tg(token=getenv('TELEGRAM_BOT_TOKEN'), chat_id=getenv('TELEGRAM_CHAT_ID'), topic_id=getenv('TELEGRAM_TOPIC_ID'))
             asyncio.run(BOT.send_notification(
                 "Status",
-                parse_markdown_v2(f"Grass instance {socket.gethostname()}"),
-                parse_markdown_v2(f"*Device ID:* {device.deviceId}\n*Country:* {device.countryCode}\n*IP Addr:* {device.ipAddress}\n*IP Score:* {device.ipScore}\n*Points:* {device.totalPoints}", exclude=["*"])
+                parse_markdown_v2(f"Grass instance with port {PROXY_PORT}"),
+                parse_markdown_v2(f"*{device.countryCode}* {device.ipAddress}", exclude=["*"])
             ))
 
         if len(ipScores) >= 5 and device.ipScore <= 74:
@@ -139,8 +221,9 @@ def main():
         sslopt={"cert_reqs": ssl.CERT_NONE},
     )
     
+    removeIP()
     asyncio.run(ERR_BOT.send_error_notification(
-        parse_markdown_v2(f"Grass instance {socket.gethostname()}"),
+        parse_markdown_v2(f"Grass instance with port {PROXY_PORT}"),
         parse_markdown_v2(f"Websocket disconnected. Actions required.")
     ))
 

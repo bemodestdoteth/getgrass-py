@@ -27,6 +27,7 @@ PROXY_USERNAME = getenv('PROXY_USERNAME')
 PROXY_PASSWORD = getenv('PROXY_PASSWORD')
 PROXY_PORT = getenv('PROXY_PORT')
 TOKEN = getenv('TOKEN')
+API_URL = getenv('API_URL')
 URL = "wss://proxy.wynd.network:4650/"
 
 def getUserAgent():

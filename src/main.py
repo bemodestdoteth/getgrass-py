@@ -15,21 +15,19 @@ import asyncio
 import requests
 
 from fake_useragent import UserAgent
-from tg import Tg, parse_markdown_v2
 
 load_dotenv()
 
+API_URL = getenv('API_URL')
+
 HASH_STR = getenv('HASH_STR')
 KEY = getenv('KEY')
-
-USER_ID = getenv('USER_ID')
 PROXY_HOST = getenv('PROXY_HOST')
 PROXY_USERNAME = getenv('PROXY_USERNAME')
 PROXY_PASSWORD = getenv('PROXY_PASSWORD')
 PROXY_PORT = getenv('PROXY_PORT')
 TOKEN = getenv('TOKEN')
 URL = "wss://proxy.wynd.network:4650/"
-ERR_BOT = Tg(token=getenv('TELEGRAM_ERROR_BOT_TOKEN'), chat_id=getenv('TELEGRAM_ERROR_CHAT_ID'), topic_id=getenv('TELEGRAM_ERROR_TOPIC_ID'))
 
 def getUserAgent():
     return UserAgent().random
@@ -40,11 +38,9 @@ def hash_string(label: str) -> str:
     return sha256.hexdigest()
 
 def pingIPServer():
-    url = 'https://cody-nas.duckdns.org/ping'
-
     try:
         # Send the request to the server along with the signature and timestamp
-        response = requests.get(url=url)
+        response = requests.get(url=f'{API_URL}/ping')
         return response
     except requests.RequestException as e:
         logger.error(f"[Exception] {str(e)}")
@@ -55,12 +51,10 @@ def checkIP(ip: str):
     current_timestamp = str(int(time.time()))
     signature = hash_string(HASH_STR + current_timestamp)
 
-    url = 'https://cody-nas.duckdns.org/api/ipAddrAdd'
-
     try:
         # Send the request to the server along with the signature and timestamp
         response = requests.post(
-            url=url,
+            url='{API_URL}/api/ipAddrAdd',
             json={
                 'ip': ip,
                 'port': PROXY_PORT,
@@ -83,7 +77,7 @@ def removeIP():
     current_timestamp = str(int(time.time()))
     signature = hash_string(HASH_STR + current_timestamp)
 
-    url = 'https://cody-nas.duckdns.org/api/ipAddrRemove'
+    url = f'{API_URL}/api/ipAddrRemove'
 
     try:
         # Send the request to the server along with the signature and timestamp
@@ -176,13 +170,6 @@ def main():
 
         ipScores.append(str(device.ipScore))
         logger.info(f"Device score {device.ipScore}")
-        if rand() < 0.3 : # Adjust message frequency
-            BOT = Tg(token=getenv('TELEGRAM_BOT_TOKEN'), chat_id=getenv('TELEGRAM_CHAT_ID'), topic_id=getenv('TELEGRAM_TOPIC_ID'))
-            asyncio.run(BOT.send_notification(
-                "Status",
-                parse_markdown_v2(f"Grass instance with port {PROXY_PORT}"),
-                parse_markdown_v2(f"*{device.countryCode}* {device.ipAddress}", exclude=["*"])
-            ))
 
         if len(ipScores) >= 5 and device.ipScore <= 74:
             logger.warning(f'Device score is too low ({" ".join(ipScores)}), exitting')
@@ -222,9 +209,5 @@ def main():
     )
     
     removeIP()
-    asyncio.run(ERR_BOT.send_error_notification(
-        parse_markdown_v2(f"Grass instance with port {PROXY_PORT}"),
-        parse_markdown_v2(f"Websocket disconnected. Actions required.")
-    ))
 
 main()

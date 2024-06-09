@@ -18,8 +18,7 @@ from fake_useragent import UserAgent
 
 load_dotenv()
 
-API_URL = getenv('API_URL')
-
+USER_ID = getenv('USER_ID')
 HASH_STR = getenv('HASH_STR')
 KEY = getenv('KEY')
 PROXY_HOST = getenv('PROXY_HOST')
@@ -29,6 +28,7 @@ PROXY_PORT = getenv('PROXY_PORT')
 TOKEN = getenv('TOKEN')
 API_URL = getenv('API_URL')
 URL = "wss://proxy.wynd.network:4650/"
+
 
 def getUserAgent():
     return UserAgent().random

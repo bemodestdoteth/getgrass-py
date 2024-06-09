@@ -55,7 +55,7 @@ def checkIP(ip: str):
     try:
         # Send the request to the server along with the signature and timestamp
         response = requests.post(
-            url='{API_URL}/api/ipAddrAdd',
+            url=f'{API_URL}/api/ipAddrAdd',
             json={
                 'ip': ip,
                 'port': PROXY_PORT,
